@@ -6,8 +6,8 @@
 
   <!-- Main Header -->
   <TextView
-      android:id="@+id/current_year"
-      style="@style/DatePicker.HeaderYear"
+      android:id="@+id/picker_title"
+      style="@style/DatePicker.HeaderTitle"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       tools:background="#8E24AA"
@@ -21,40 +21,33 @@
       tools:background="#8E24AA"
       tools:text="Fri, Jul 28"
       />
-
-  <!-- Current Month Header -->
   <androidx.appcompat.widget.AppCompatImageView
-      android:id="@+id/left_chevron"
-      style="@style/DatePicker.Chevron.Start"
-      />
-  <TextView
-      android:id="@+id/current_month"
-      style="@style/DatePicker.CurrentMonth"
-      tools:text="July 2019"
-      />
-  <androidx.appcompat.widget.AppCompatImageView
-      android:id="@+id/right_chevron"
-      style="@style/DatePicker.Chevron.End"
+      android:id="@+id/edit_mode_toggle"
+      style="@style/DatePicker.EditModeToggle"
       />
 
-  <!-- Days of month grid -->
-  <androidx.recyclerview.widget.RecyclerView
-      android:id="@+id/day_list"
-      style="@style/DayOfMonthList"
-      />
+  <!-- Input Mode Field -->
+  <com.google.android.material.textfield.TextInputLayout
+      android:id="@+id/edit_mode_input"
+      style="@style/DatePicker.EditInputLayout"
+      >
+    <com.google.android.material.textfield.TextInputEditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="date"
+        />
+  </com.google.android.material.textfield.TextInputLayout>
 
-  <!-- Months and years lists -->
+  <include layout="@layout/calendar_page" />
+
+  <!-- Years grid -->
   <View
-      android:id="@+id/year_month_list_divider"
+      android:id="@+id/year_grid_divider"
       style="@style/Divider"
       />
   <androidx.recyclerview.widget.RecyclerView
-      android:id="@+id/year_list"
-      style="@style/YearOrMonthList"
-      />
-  <androidx.recyclerview.widget.RecyclerView
-      android:id="@+id/month_list"
-      style="@style/YearOrMonthList"
+      android:id="@+id/year_grid"
+      style="@style/YearList"
       />
 
 </merge>

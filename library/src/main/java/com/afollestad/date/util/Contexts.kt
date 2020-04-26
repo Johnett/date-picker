@@ -16,13 +16,19 @@
 package com.afollestad.date.util
 
 import android.content.Context
+import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import androidx.annotation.AttrRes
 import androidx.annotation.CheckResult
-import android.util.TypedValue
+import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
+import androidx.annotation.DrawableRes
+import androidx.annotation.Px
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 
 /** @author Aidan Follestad (@afollestad) */
-internal fun Context.resolveColor(
+@CheckResult internal fun Context.resolveColor(
   @AttrRes attr: Int,
   fallback: (() -> Int)? = null
 ): Int {
@@ -36,6 +42,24 @@ internal fun Context.resolveColor(
   } finally {
     a.recycle()
   }
+}
+
+/** @author Aidan Follestad (@afollestad) */
+@CheckResult @Px internal fun Context.dimenPx(@DimenRes dimen: Int): Int {
+  return resources.getDimensionPixelSize(dimen)
+}
+
+/** @author Aidan Follestad (@afollestad) */
+@CheckResult internal fun Context.drawable(
+  @DrawableRes drawable: Int,
+  @ColorInt tint: Int? = null
+): Drawable {
+  val result = ContextCompat.getDrawable(this, drawable)!!
+  if (tint != null) {
+    return DrawableCompat.wrap(result)
+        .apply { DrawableCompat.setTint(this, tint) }
+  }
+  return result
 }
 
 /** @author Aidan Follestad (@afollestad) */

@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.afollestad.date
+package com.afollestad.date.util
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import kotlin.reflect.KClass
+import java.util.Calendar
+import java.util.Date
 
-internal fun <T : Exception> assertException(
-  type: KClass<T>,
-  block: () -> Unit
-) {
-  try {
-    block()
-    fail("Expected exception, but succeeded.")
-  } catch (e: Exception) {
-    assertEquals(e::class, type)
-  }
+/** @author Aidan Follestad (@afollestad) */
+internal fun Date.toCalendar(): Calendar {
+  return Calendar.getInstance()
+      .apply { time = this@toCalendar }
 }

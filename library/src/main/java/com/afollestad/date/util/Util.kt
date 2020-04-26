@@ -18,17 +18,17 @@ package com.afollestad.date.util
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.PorterDuff.Mode.SRC_IN
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.GradientDrawable.OVAL
+import android.graphics.drawable.GradientDrawable.RECTANGLE
+import android.graphics.drawable.InsetDrawable
 import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Build
 import androidx.annotation.CheckResult
 import androidx.annotation.ColorInt
-import androidx.annotation.DrawableRes
-import androidx.core.content.ContextCompat
+import com.afollestad.date.R
 
 /** @author Aidan Follestad (@afollestad) */
 internal object Util {
@@ -60,9 +60,47 @@ internal object Util {
 
   /** @author Aidan Follestad (@afollestad) */
   @CheckResult fun createCircularSelector(
+    context: Context,
+    @ColorInt selectedColor: Int,
+    @ColorInt todayStrokeColor: Int? = null
+  ): Drawable {
+    val selected: Drawable = circleShape(context, selectedColor)
+    val activated: Drawable? = todayStrokeColor?.let {
+      circleShape(
+          context = context,
+          color = it,
+          outlineOnly = true
+      )
+    }
+
+    if (Build.VERSION.SDK_INT >= 21) {
+      return RippleDrawable(
+          ColorStateList.valueOf(selectedColor),
+          StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_selected), selected)
+            activated?.let { addState(intArrayOf(android.R.attr.state_activated), it) }
+          },
+          activated ?: selected
+      )
+    }
+
+    return StateListDrawable().apply {
+      addState(
+          intArrayOf(android.R.attr.state_enabled, android.R.attr.state_pressed),
+          selected.mutate().apply {
+            alpha = (255 * 0.3).toInt()
+          })
+      addState(intArrayOf(android.R.attr.state_enabled, android.R.attr.state_selected), selected)
+      activated?.let { addState(intArrayOf(android.R.attr.state_activated), it) }
+    }
+  }
+
+  /** @author Aidan Follestad (@afollestad) */
+  @CheckResult fun createRoundedRectangleSelector(
+    context: Context,
     @ColorInt selectedColor: Int
   ): Drawable {
-    val selected: Drawable = circleShape(selectedColor)
+    val selected: Drawable = roundedRectangleShape(context, selectedColor)
 
     if (Build.VERSION.SDK_INT >= 21) {
       return RippleDrawable(
@@ -84,23 +122,35 @@ internal object Util {
     }
   }
 
-  /** @author Aidan Follestad (@afollestad) */
-  @CheckResult fun coloredDrawable(
+  private fun circleShape(
     context: Context,
-    @DrawableRes shapeRes: Int,
-    @ColorInt color: Int
+    @ColorInt color: Int,
+    outlineOnly: Boolean = false
   ): Drawable {
-    return ContextCompat.getDrawable(context, shapeRes)!!.apply {
-      @Suppress("DEPRECATION")
-      setColorFilter(color, SRC_IN)
-      alpha = Color.alpha(color)
+    val result = GradientDrawable().apply {
+      shape = OVAL
+      if (outlineOnly) {
+        setStroke(context.dimenPx(R.dimen.day_of_month_today_border_width), color)
+      } else {
+        colors = intArrayOf(color, color)
+      }
+    }
+    return if (outlineOnly) {
+      val inset = (context.dimenPx(R.dimen.day_of_month_circle_inset) * 0.25f).toInt()
+      InsetDrawable(result, inset, inset, inset, inset)
+    } else {
+      result
     }
   }
 
-  private fun circleShape(@ColorInt color: Int): Drawable {
+  private fun roundedRectangleShape(
+    context: Context,
+    @ColorInt color: Int
+  ): Drawable {
     return GradientDrawable().apply {
-      shape = OVAL
+      shape = RECTANGLE
       colors = intArrayOf(color, color)
+      cornerRadius = context.resources.getDimension(R.dimen.rounded_rectangle_radius)
     }
   }
 }

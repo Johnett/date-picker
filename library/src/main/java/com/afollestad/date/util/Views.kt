@@ -50,9 +50,8 @@ internal fun View.showOrConceal(show: Boolean) = if (show) show() else conceal()
 internal fun View.isVisible(): Boolean = visibility == VISIBLE
 
 /** @author Aidan Follestad (@afollestad) */
-internal fun ViewGroup.inflate(@LayoutRes res: Int): View {
-  return LayoutInflater.from(context)
-      .inflate(res, this, false)
+internal inline fun <reified T> ViewGroup.inflate(@LayoutRes res: Int): T {
+  return LayoutInflater.from(context).inflate(res, this, false) as T
 }
 
 /** @author Aidan Follestad (@afollestad) */
@@ -71,9 +70,12 @@ internal fun View.placeAt(
   left: Int = 0,
   rightOffset: Int = measuredWidth,
   bottomOffset: Int = measuredHeight
-) = layout(
-    /* left=   */left,
-    /* top=    */top,
-    /* right=  */left + rightOffset,
-    /* bottom= */top + bottomOffset
-)
+) {
+//  if (isGone()) return
+  layout(
+      /* left=   */left,
+      /* top=    */top,
+      /* right=  */left + rightOffset,
+      /* bottom= */top + bottomOffset
+  )
+}

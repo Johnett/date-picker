@@ -35,7 +35,8 @@ internal sealed class MonthItem {
     val dayOfWeek: DayOfWeek,
     val month: MonthSnapshot,
     val date: Int = NO_DATE,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    val isToday: Boolean = false
   ) : MonthItem()
 }
 

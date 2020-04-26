@@ -15,49 +15,24 @@
  */
 package com.afollestad.date.renderers
 
-import android.content.Context
-import android.content.res.TypedArray
-import android.graphics.Typeface
 import android.view.Gravity.CENTER
 import android.view.View
 import android.widget.TextView
-import com.afollestad.date.R
-import com.afollestad.date.controllers.MinMaxController
-import com.afollestad.date.data.DateFormatter
+import com.afollestad.date.DatePickerConfig
 import com.afollestad.date.data.DayOfWeek
 import com.afollestad.date.data.MonthItem
 import com.afollestad.date.data.MonthItem.DayOfMonth
 import com.afollestad.date.data.MonthItem.WeekHeader
 import com.afollestad.date.data.NO_DATE
-import com.afollestad.date.util.Util.coloredDrawable
+import com.afollestad.date.dayOfWeek
 import com.afollestad.date.util.Util.createCircularSelector
 import com.afollestad.date.util.Util.createTextSelector
-import com.afollestad.date.util.color
-import com.afollestad.date.util.resolveColor
-import com.afollestad.date.util.withAlpha
-import com.afollestad.date.data.snapshot.DateSnapshot
-import com.afollestad.date.dayOfWeek
 import com.afollestad.date.util.onClickDebounced
+import com.afollestad.date.util.resolveColor
 import java.util.Calendar
 
-// TODO write unit tests
 /** @author Aidan Follestad (@afollestad) */
-internal class MonthItemRenderer(
-  private val context: Context,
-  typedArray: TypedArray,
-  private val normalFont: Typeface,
-  private val minMaxController: MinMaxController,
-  private val dateFormatter: DateFormatter
-) {
-  private val selectionColor: Int =
-    typedArray.color(R.styleable.DatePicker_date_picker_selection_color) {
-      context.resolveColor(R.attr.colorAccent)
-    }
-  private val disabledBackgroundColor: Int =
-    typedArray.color(R.styleable.DatePicker_date_picker_disabled_background_color) {
-      context.resolveColor(android.R.attr.textColorSecondary)
-          .withAlpha(DEFAULT_DISABLED_BACKGROUND_OPACITY)
-    }
+internal class MonthItemRenderer(private val config: DatePickerConfig) {
   private val calendar = Calendar.getInstance()
 
   fun render(
@@ -79,8 +54,8 @@ internal class MonthItemRenderer(
     textView.apply {
       setTextColor(context.resolveColor(android.R.attr.textColorSecondary))
       calendar.dayOfWeek = dayOfWeek
-      text = dateFormatter.weekdayAbbreviation(calendar)
-      typeface = normalFont
+      text = config.dateFormatter.weekdayAbbreviation(calendar)
+      typeface = config.normalFont
     }
   }
 
@@ -92,9 +67,9 @@ internal class MonthItemRenderer(
   ) {
     rootView.background = null
     textView.apply {
-      setTextColor(createTextSelector(context, selectionColor))
+      setTextColor(createTextSelector(context, config.selectionColor))
       text = dayOfMonth.date.positiveOrEmptyAsString()
-      typeface = normalFont
+      typeface = config.normalFont
       gravity = CENTER
       background = null
       setOnClickListener(null)
@@ -103,47 +78,25 @@ internal class MonthItemRenderer(
     if (dayOfMonth.date == NO_DATE) {
       rootView.isEnabled = false
       textView.isSelected = false
+      textView.isActivated = false
       return
     }
 
-    val currentDate = DateSnapshot(
-        month = dayOfMonth.month.month,
-        year = dayOfMonth.month.year,
-        day = dayOfMonth.date
-    )
-    textView.isSelected = dayOfMonth.isSelected
-
-    when {
-      minMaxController.isOutOfMinRange(currentDate) -> {
-        val drawableRes = minMaxController.getOutOfMinRangeBackgroundRes(currentDate)
-        rootView.apply {
-          background = coloredDrawable(context, drawableRes, disabledBackgroundColor)
-          isEnabled = false
-        }
-      }
-      minMaxController.isOutOfMaxRange(currentDate) -> {
-        val drawable = minMaxController.getOutOfMaxRangeBackgroundRes(currentDate)
-        rootView.apply {
-          background = coloredDrawable(context, drawable, disabledBackgroundColor)
-          isEnabled = false
-        }
-      }
-      else -> {
-        rootView.isEnabled = textView.text.toString()
-            .isNotEmpty()
-        textView.apply {
-          background = createCircularSelector(selectionColor)
-          onClickDebounced { onSelection(dayOfMonth) }
-        }
-      }
+    rootView.isEnabled = textView.text.toString()
+        .isNotEmpty()
+    textView.apply {
+      isSelected = dayOfMonth.isSelected
+      isActivated = dayOfMonth.isToday
+      background = createCircularSelector(
+          context = context,
+          selectedColor = config.selectionColor,
+          todayStrokeColor = config.todayStrokeColor
+      )
+      onClickDebounced { onSelection(dayOfMonth) }
     }
   }
 
   private fun Int.positiveOrEmptyAsString(): String {
     return if (this < 1) "" else toString()
-  }
-
-  private companion object {
-    const val DEFAULT_DISABLED_BACKGROUND_OPACITY: Float = 0.3f
   }
 }

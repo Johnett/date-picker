@@ -17,34 +17,30 @@ package com.afollestad.date.data
 
 import androidx.annotation.CheckResult
 import androidx.annotation.VisibleForTesting
-import com.afollestad.date.dayOfMonth
-import com.afollestad.date.dayOfWeek
 import com.afollestad.date.data.MonthItem.DayOfMonth
 import com.afollestad.date.data.MonthItem.WeekHeader
-import com.afollestad.date.month
 import com.afollestad.date.data.snapshot.DateSnapshot
+import com.afollestad.date.data.snapshot.snapshot
 import com.afollestad.date.data.snapshot.snapshotMonth
+import com.afollestad.date.dayOfMonth
+import com.afollestad.date.dayOfWeek
+import com.afollestad.date.month
 import com.afollestad.date.totalDaysInMonth
 import com.afollestad.date.year
 import java.util.Calendar
-import kotlin.properties.Delegates
 
 /** @author Aidan Follestad (@afollestad) */
 internal class MonthGraph(
-  @VisibleForTesting val calendar: Calendar
+  initialCalendar: Calendar,
+  @VisibleForTesting today: Calendar = Calendar.getInstance()
 ) {
-  @VisibleForTesting var daysInMonth: Int by Delegates.notNull()
-  @VisibleForTesting var firstWeekDayInMonth: DayOfWeek
-  var orderedWeekDays: List<DayOfWeek>
-
-  init {
-    calendar.dayOfMonth = 1
-    daysInMonth = calendar.totalDaysInMonth
-    firstWeekDayInMonth = calendar.dayOfWeek
-    orderedWeekDays = calendar.firstDayOfWeek
-        .asDayOfWeek()
-        .andTheRest()
-  }
+  private val today: DateSnapshot = today.snapshot()
+  @VisibleForTesting val calendar = (initialCalendar.clone() as Calendar).apply { dayOfMonth = 1 }
+  @VisibleForTesting var daysInMonth: Int = calendar.totalDaysInMonth
+  @VisibleForTesting var firstWeekDayInMonth: DayOfWeek = calendar.dayOfWeek
+  var orderedWeekDays: List<DayOfWeek> = calendar.firstDayOfWeek
+      .asDayOfWeek()
+      .andTheRest()
 
   @CheckResult fun getMonthItems(selectedDate: DateSnapshot): List<MonthItem> {
     val daysOfMonth = mutableListOf<MonthItem>()
@@ -60,17 +56,19 @@ internal class MonthGraph(
     daysOfMonth.addAll(
         orderedWeekDays
             .takeWhile { it != firstWeekDayInMonth }
-            .map { DayOfMonth(it, month) }
+            .map { DayOfMonth(it, month, isToday = false) }
     )
 
     for (date in 1..daysInMonth) {
       calendar.dayOfMonth = date
+      val dateSnapshot = DateSnapshot(calendar.month, date, calendar.year)
       daysOfMonth.add(
           DayOfMonth(
               dayOfWeek = calendar.dayOfWeek,
               month = month,
               date = date,
-              isSelected = selectedDate == DateSnapshot(calendar.month, date, calendar.year)
+              isToday = dateSnapshot == today,
+              isSelected = selectedDate == dateSnapshot
           )
       )
     }
@@ -85,14 +83,14 @@ internal class MonthGraph(
               .nextDayOfWeek()
               .andTheRest()
               .takeWhile { it != loopTarget }
-              .map { DayOfMonth(it, month) }
+              .map { DayOfMonth(it, month, isToday = false) }
       )
     }
     // Make sure we fill up 6 weeks worth of dates
     while (daysOfMonth.size < EXPECTED_SIZE) {
-      daysOfMonth.addAll(orderedWeekDays.map { DayOfMonth(it, month,
-          NO_DATE
-      ) })
+      daysOfMonth.addAll(orderedWeekDays.map {
+        DayOfMonth(it, month, isToday = false)
+      })
     }
 
     check(daysOfMonth.size == EXPECTED_SIZE) {
